@@ -10,7 +10,7 @@ A simple and scalable queue management system using Node.js and MongoDB, with su
 6. Scalability: Scale the queue management system horizontally, allowing multiple instances to work together.
 
 ### Installation
-npm install queue-management-package
+npm install saksh-queue
 
 ### Environment Variables
 Create a .env file in the root of your project and add your MongoDB connection string:
@@ -20,6 +20,11 @@ MONGODB_URL=mongodb://localhost:27017
 ### Usage
 
 ### Basic Setup
+
+
+
+Create an index.js file to add tasks to the queue:
+
 
 ```
 const QueueManager = require('saksh-queue');
@@ -33,29 +38,57 @@ await queueManager.addTask('Task A', 1); // Priority 1
 await queueManager.addTask('Task B', 2); // Priority 2
 await queueManager.addTask('Task C', 3); // Priority 3
 
-const processTask = async (task) => {
-console.log('Processing:', task);
-await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate task processing
-};
-
-const errorCallback = (task, error) => {
-console.error(`Error processing task "${task}":`, error);
-};
-
-queueManager.startProcessing(processTask, errorCallback);
-
-// Close the connection after some time
-setTimeout(() => queueManager.close(), 60000);
+// Close the connection after adding tasks
+await queueManager.close();
 }
 
 main().catch(console.error);
 ```
 
 
-### Task with Dependencies
+#### Running the Worker
+
+
+Create a worker.js file to continuously process the queue:
+
+
+``` 
+
+const QueueManager = require('saksh-queue');
+
+async function startWorker() {
+const queueManager = new QueueManager();
+await queueManager.connect();
+
+const processTask = async (task) => {
+// Custom task processing logic
+console.log('Processing:', task);
+await new Promise(resolve => setTimeout(resolve, 1000));
+};
+
+const errorCallback = (task, error) => {
+// Custom error handling logic
+console.error(`Error processing task "${task}":`, error);
+};
+
+queueManager.startProcessing(processTask, errorCallback);
+
+// Keep the worker running indefinitely
+process.on('SIGINT', async () => {
+await queueManager.close();
+process.exit();
+});
+}
+
+startWorker().catch(console.error);
 
 ```
-const QueueManager = require('queue-management-package');
+
+
+#### Task with Dependencies
+
+```
+const QueueManager = require('saksh-queue');
 
 async function main() {
 const queueManager = new QueueManager();
@@ -83,13 +116,8 @@ setTimeout(() => queueManager.close(), 60000);
 
 main().catch(console.error);
 
-```
-
-
-#### Handling Errors and Notifications
-
-```
-const QueueManager = require('queue-management-package');
+Handling Errors and Notifications
+const QueueManager = require('saksh-queue');
 
 async function main() {
 const queueManager = new QueueManager();
@@ -119,12 +147,17 @@ setTimeout(() => queueManager.close(), 60000);
 }
 
 main().catch(console.error);
+
 ```
+
+
 
 
 #### Persistence and Recovery
+
 ```
-const QueueManager = require('queue-management-package');
+
+const QueueManager = require('saksh-queue');
 
 async function main() {
 const queueManager = new QueueManager();
@@ -162,11 +195,10 @@ main().catch(console.error);
 ```
 
 
-
 #### Scalability with Multiple Instances
 
 ```
-const QueueManager = require('queue-management-package');
+const QueueManager = require('saksh-queue');
 
 async function main() {
 const queueManager1 = new QueueManager();
@@ -198,9 +230,10 @@ queueManager2.close();
 }
 
 main().catch(console.error);
-
-
 ```
+
+
+
 #### License
 This project is licensed under the MIT License.
 
